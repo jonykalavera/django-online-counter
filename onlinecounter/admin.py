@@ -15,23 +15,12 @@
 #You should have received a copy of the GNU General Public License
 #along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from setuptools import setup, find_packages
+from onlinecounter.models import OnlineCounter
+from django.contrib import admin
 
-setup(
-    name = "django-online-counter",
-    packages = find_packages(),
-    package_data = {"onlinecounter.demo" : ["templates/*"]},
-    version = "1.0",
-    license = "GPL v3",
-    description = "Django online visitor counter",
-    author = u"Metehan Özbek",
-    author_email = "metehan[at]metehan.us",
-    url = "http://www.metehan.us/",
-    download_url = "",
-    keywords = ["django","online counter"],
-    classifiers = [
-        "License :: OSI Approved :: GNU Affero General Public License v3",
-        "Environment :: Web Environment",
-        "Framework :: Django"
-    ],
-)
+class OnlineCounterAdmin(admin.ModelAdmin):
+    list_display = ("ip",)
+    exlude = ("ip",)
+    readonly_fields = ("ip",)
+
+admin.site.register(OnlineCounter, OnlineCounterAdmin)
