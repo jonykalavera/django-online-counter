@@ -10,7 +10,7 @@ or
 
 command to install the application.
 
-settings.py dosyasını aşağıdaki gibi düzenleyin.
+settings.py editing.
 
 <pre>
 MIDDLEWARE_CLASSES = (
