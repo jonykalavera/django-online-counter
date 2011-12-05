@@ -1,3 +1,2 @@
 
-
-global-include *.txt
+global-include *.txt *.md
