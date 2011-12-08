@@ -21,15 +21,19 @@ from datetime import datetime, time
 class OnlineCounterMiddleware(object):
     def process_request(self, request):
         now_time = datetime.now().time()
-        limit = time(now_time.hour, now_time.minute-5, now_time.second, now_time.microsecond)
+        minutes = 5
+        if now_time.minute < minutes:
+            minutes = now_time.minute
+        limit = time(now_time.hour, now_time.minute-minutes, now_time.second, now_time.microsecond)
         OnlineCounter.objects.filter(visited_time__lt=limit).delete()
         online, create = OnlineCounter.objects.get_or_create(ip=request.META["REMOTE_ADDR"])
         if request.user.is_authenticated():
             online.is_user = True
-        if not create:
+        else:
             online.is_user = False
+        if not create:
             online.visited_time = now_time
-            online.save()
+        online.save()
         request.online = self
 
     def total(self):
