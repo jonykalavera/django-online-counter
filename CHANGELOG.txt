@@ -1,0 +1,1 @@
+2012/11/26 - Forked django-online-counter. Changed model based registry to django's cache framework. Added is_online method to User class.
