@@ -14,14 +14,70 @@
 #
 #You should have received a copy of the GNU General Public License
 #along with this program. If not, see <http://www.gnu.org/licenses/>.
+from datetime import datetime, timedelta
+import time
 
-from django.db import models
+from django.contrib.auth.models import User
+from django.core import cache
 
-class OnlineCounter(models.Model):
-    ip = models.IPAddressField(verbose_name="IP Address", db_column="visitor_ip")
-    is_user = models.BooleanField(verbose_name="User ?", db_column="is_user", default=False)
-    visited_time = models.TimeField(verbose_name="Visited Time", db_column="visitor_time", auto_now_add=True)
+from .config import ONLINE_USERS_KEY, ONLINE_USER_KEY_PREFIX, ONLINE_USER_TIMEOUT
 
-    class Meta:
-        db_table = "online_counter"
-        verbose_name_plural = "Online Counter"
+
+class OnlineCounter(object):
+    def online_users():
+        doc = "The online_users property."
+        def fget(self):
+            if not getattr(self, '_online_users', False):
+                self._online_users = cache.get(ONLINE_USERS_KEY, {})
+            return self._online_users
+        def fset(self, value):
+            cache.set(ONLINE_USERS_KEY, value)
+            self._online_users = value
+        def fdel(self):
+            cache.delete(ONLINE_USERS_KEY)
+            del self._online_users
+        return locals()
+    online_users = property(**online_users())
+    
+    @property
+    def guests(self):
+        if not getattr(self, '_guests', False):
+            self._guests = dict((k, v) for k, v in self.online_users if not v.get('is_user', False))
+        return self._guests
+    
+    @property
+    def users(self):
+        if not getattr(self, '_users', False):
+            self._users = dict((k, v) for k, v in self.online_users if v.get('is_user', False))
+        return self._users
+    
+    def delete_idle(self):
+        now_time = datetime.now()
+        limit = datetime.now() - timedelta(seconds=ONLINE_USER_TIMEOUT)
+        now_ts = time.mktime(now_time.timetuple())
+        limit_ts = time.mktime(limit.timetuple())
+        self._online_users = dict((k, v) for k, v in self.online_users if v.get('visited_time') > limit_ts)
+    
+    def check_in(self, request):
+        now_time = datetime.now()
+        now_ts = time.mktime(now_time.timetuple())
+        online_user = self.online_users.get(request.session.id, {})
+        if request.user.is_authenticated():
+            online_user['is_user'] = True
+            cache.set(
+                '%s_%s' % (ONLINE_USER_KEY_PREFIX, str(request.user.pk)), True, ONLINE_USER_TIMEOUT)
+        else:
+            online_user['is_user'] = False
+        online_user['visited_time'] = now_ts
+        self.online_users[request.session.id] = online_user
+
+
+def patch_user():
+    def is_online(self):
+        return cache.get(
+            '%s_%s' % (ONLINE_USER_KEY_PREFIX, str(self.pk)), False)
+    User.is_online = is_online
+
+
+if not getattr(User, 'is_online', False):
+    patch_user()

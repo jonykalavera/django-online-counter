@@ -18,32 +18,22 @@
 from onlinecounter.models import OnlineCounter
 from datetime import datetime, time
 
+
 class OnlineCounterMiddleware(object):
     def process_request(self, request):
-        now_time = datetime.now().time()
-        minutes = 5
-        if now_time.minute < minutes:
-            minutes = now_time.minute
-        limit = time(now_time.hour, now_time.minute-minutes, now_time.second, now_time.microsecond)
-        OnlineCounter.objects.filter(visited_time__lt=limit).delete()
-        online, create = OnlineCounter.objects.get_or_create(ip=request.META["REMOTE_ADDR"])
-        if request.user.is_authenticated():
-            online.is_user = True
-        else:
-            online.is_user = False
-        if not create:
-            online.visited_time = now_time
-        online.save()
+        self.online_counter = OnlineCounter()
+        self.online_counter.delete_idle()
+        self.online_counter.check_in(request)
         request.online = self
 
     def total(self):
-        total = OnlineCounter.objects.all().count()
+        total = len(self.online_counter.online_users)
         return total
 
     def guest(self):
-        guest = OnlineCounter.objects.filter(is_user=False).count()
+        guest = len(self.online_counter.guests)
         return guest
 
     def users(self):
-        users = OnlineCounter.objects.filter(is_user=True).count()
+        users = len(self.online_counter.users)
         return users
