@@ -1,4 +1,26 @@
 --------------
+Fork Info
+--------------
+Forked from mthnzbk/django-online-counter to change the model bassed storage to djang's cache framework.
+Also to be able to determine the online status of each user.
+
+You can install this fork with pip by typing:
+
+**pip install -e http://github.com/jonykalavera/django-online-counter.git#egg=onlinecounter**
+
+Follow the normal install instructions except the **syncdb** part.
+
+with this you can use the is_online method for **django.contrib.auth.models.User** instances. ej:
+
+<pre>
+def example(request):
+    request.user.is_online()
+    ... # or
+    user = User.objects.get(pk=id)
+    user.is_online()
+</pre>
+
+--------------
 English
 --------------
 
