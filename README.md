@@ -4,9 +4,11 @@ Fork Info
 Forked from mthnzbk/django-online-counter to change the model bassed storage to djang's cache framework.
 Also to be able to determine the online status of each user.
 
-You can install this fork with pip by typing:
+This is in a ***very early stage*** but if you're feeling dangerous you can install this fork with pip by typing:
 
-**pip install -e http://github.com/jonykalavera/django-online-counter.git#egg=onlinecounter**
+<pre>
+pip install -e http://github.com/jonykalavera/django-online-counter.git#egg=onlinecounter**
+</pre>
 
 Follow the normal install instructions except the **syncdb** part.
 
