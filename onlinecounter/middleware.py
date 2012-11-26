@@ -16,7 +16,6 @@
 #along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from onlinecounter.models import OnlineCounter
-from datetime import datetime, time
 
 
 class OnlineCounterMiddleware(object):
