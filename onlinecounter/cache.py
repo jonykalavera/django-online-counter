@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 import time
 
 from django.contrib.auth.models import User
-from django.core import cache
+from django.core.cache import cache
 
 from .config import ONLINE_USERS_KEY, ONLINE_USER_KEY_PREFIX, \
     ONLINE_USER_TIMEOUT
@@ -47,7 +47,7 @@ class OnlineCounter(object):
     def guests(self):
         if not getattr(self, '_guests', False):
             self._guests = dict(
-                (k, v) for k, v in self.online_users if not v.get(
+                (k, v) for k, v in self.online_users.iteritems() if not v.get(
                     'is_user', False))
         return self._guests
 
@@ -55,20 +55,20 @@ class OnlineCounter(object):
     def users(self):
         if not getattr(self, '_users', False):
             self._users = dict(
-                (k, v) for k, v in self.online_users if v.get(
+                (k, v) for k, v in self.online_users.iteritems() if v.get(
                     'is_user', False))
         return self._users
 
     def delete_idle(self):
         limit = datetime.now() - timedelta(seconds=ONLINE_USER_TIMEOUT)
         limit_ts = time.mktime(limit.timetuple())
-        self._online_users = dict(
-            (k, v) for k, v in self.online_users if v.get(
+        self.online_users = dict(
+            (k, v) for k, v in self.online_users.iteritems() if v.get(
                 'visited_time') > limit_ts)
 
     def check_in(self, request):
         now_ts = time.mktime(datetime.now().timetuple())
-        online_user = self.online_users.get(request.session.id, {})
+        online_user = self.online_users.get(request.session.session_key, {})
         if request.user.is_authenticated():
             online_user['is_user'] = True
             cache.set(
@@ -79,7 +79,7 @@ class OnlineCounter(object):
         else:
             online_user['is_user'] = False
         online_user['visited_time'] = now_ts
-        self.online_users[request.session.id] = online_user
+        self.online_users[request.session.session_key] = online_user
 
 
 def patch_user():
